@@ -1,34 +1,31 @@
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native"
-import React from "react"
-import { colors } from "../constants/colors"
-import Card from "./Card"
-import {useDispatch, useSelector} from 'react-redux'
-import { setCategorySelected } from "../features/Shop/shopSlice"
+import { Pressable, StyleSheet} from "react-native";
+import { useDispatch } from "react-redux";
+import { setCategorySelected } from "../features/shop/shopSlice";
+import StyledText from "../styledComponents/StyledText";
+import StyledView from "../styledComponents/StyledView";
+
+
 
 const CategoryItem = ({ category, navigation }) => {
-
   const dispatch = useDispatch()
 
-  const handleNavigate = () => {
-    dispatch(setCategorySelected(category))
-    navigation.navigate('ItemListCategory', {category})
-  }
-
   return (
-    <Card style={{ marginVertical: 10, marginHorizontal: 10 }}>
-      <Pressable onPress={handleNavigate}>
-        <Text style={styles.text}>{category}</Text>
+    <StyledView card marginVertical>
+      <Pressable
+      onPress={() => {
+        dispatch(setCategorySelected(category))
+        navigation.navigate("ItemListCategories", { category });
+      }}
+    >
+        <StyledText textCategori white>{category}</StyledText>
       </Pressable>
-    </Card>
-  )
-}
+    </StyledView>
+  );
+};
 
-export default CategoryItem
+export default CategoryItem;
+
+
 
 const styles = StyleSheet.create({
-  text: {
-    color: colors.platinum,
-    textAlign: "center",
-    fontSize: 20,
-  },
-})
+});

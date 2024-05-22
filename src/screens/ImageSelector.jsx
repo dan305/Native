@@ -1,145 +1,115 @@
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
-import { Image, View, StyleSheet, Text } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useDispatch, useSelector } from "react-redux";
-import { setCameraImage } from "../features/User/userSlice";
-import AddButton from "../components/AddButton";
-import { colors } from "../constants/colors";
+import { setCameraImage } from "../features/auth/authSlice";
 import { usePostProfileImageMutation } from "../services/shopService";
-// import { usePostProfileImageMutation } from "../Services/shopServices";
-// import { saveImage } from "../Features/User/userSlice";
+import StyledText from "../styledComponents/StyledText";
 
 const ImageSelector = ({ navigation }) => {
-    const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null);
+  const { localId } = useSelector((state) => state.authReducer.value);
+  const [triggerSaveProfileImage, result] = usePostProfileImageMutation();
+  const dispatch = useDispatch();
 
-    const [triggerPostImage, result] = usePostProfileImageMutation()
-
-    const {localId} = useSelector(state => state.auth.value)
-
-    console.log(localId);
-
-    const dispatch = useDispatch()
-
-    /* const [triggerSaveImage, resultSaveImage] = usePostProfileImageMutation();
-    const dispatch = useDispatch();
-    const { localId } = useSelector((state) => state.auth.value); */
-
-    const verifyCameraPermissions = async () => {
-        const {granted} = await ImagePicker.requestCameraPermissionsAsync()
-        return granted
+  const verifyCameraPermissions = async () => {
+    const { granted } = await ImagePicker.requestCameraPermissionsAsync();
+    if (!granted) {
+      return false;
     }
-    /* const verifyCameraPermissions = async () => {
-        const { granted } = await ImagePicker.requestCameraPermissionsAsync();
-        if (!granted) {
-            return false;
-        }
-        return true;
-    };
- */
-    const pickImage = async () => {
+    return true; 
+  };
 
-        try {
-            const permissionCamera = await verifyCameraPermissions()
-            
-            if (permissionCamera) {
-                let result = await ImagePicker.launchCameraAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.All,
-                    allowsEditing: true,
-                    aspect: [1, 1],
-                    base64: true,
-                    quality: 0.2    
-                })
-                /* console.log(result);
-                console.log(result.assets[0].base64.length) */
-                if (!result.canceled){
-                    const image = `data:image/jpeg;base64,${result.assets[0].base64}`
-                    setImage(image)
-                }
-            }
-            
-        } catch (error) {
-            console.log(error);
-        }
+  const pickImage = async () => {
+    const isCameraOk = await verifyCameraPermissions();
+    if (isCameraOk) {
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [9, 16],
+        base64: true,
+        quality: 1,
+      });
 
-        /* //Permission for camera
-        const isCameraOk = await verifyCameraPermissions();
+      if (!result.cancelled) {
+        setImage(result.assets[0].uri);
+      }
+    }
+  };
 
-        if (isCameraOk) {
-            // No permissions request is necessary for launching the image library
-            let result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.All,
-                allowsEditing: true,
-                aspect: [1, 1],
-                base64: true,
-                quality: 0.1,
-            });
+  const confirmImage = () => {
+    dispatch(setCameraImage(image));
+    triggerSaveProfileImage({ localId, image });
+    navigation.goBack();
+  };
 
-            if (!result.canceled) {
-                // console.log(result.assets[0].base64.length);
-                const image = `data:image/jpeg;base64,${result.assets[0].base64}`
-                setImage(image)
-            }
-        } */
-    };
-    
-    const confirmImage = async () => {
-        try {
-            dispatch(setCameraImage(image))
-            triggerPostImage({image, localId})
-            navigation.goBack()
-        } catch (error) {
-            console.log(error);
-        }
-        /* try {
-            dispatch(setCameraImage(image));
-            triggerSaveImage({image, localId})
-        } catch (error) {
-            console.log(error);
-        }
-        navigation.goBack(); */
-    };
-
-    return (
-        <View style={styles.container}>
-            {image ? (
-                <>
-                    <Image source={{ uri: image }} style={styles.image} />
-                    <AddButton title="Take another photo" onPress={pickImage} />
-                    <AddButton title="Confirm photo" onPress={confirmImage} />
-                </>
-            ) : (
-                <>
-                    <View style={styles.noPhotoContainer}>
-                        <Text>No photo to show...</Text>
-                    </View>
-                    <AddButton title="Take a photo" onPress={pickImage} />
-                </>
-            )}
+  return (
+    <View style={styles.container}>
+      {image ? (
+        <>
+          <Image source={{ uri: image }} style={styles.image} />
+          <Pressable style={styles.button} onPress={pickImage}>
+            <StyledText link white font>Tomar otra foto</StyledText>
+          </Pressable>
+          <Pressable style={[styles.button, styles.confirmButton]} onPress={confirmImage}>
+            <Text style={styles.buttonText}>Confirmar foto</Text>
+          </Pressable>
+        </>
+      ) : (
+        <View style={styles.noPhotoContainer}>
+          <Text style={styles.noPhotoText}>No hay foto para mostrar </Text>
+          <Pressable style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Tomar foto</Text>
+          </Pressable>
         </View>
-    );
+      )}
+    </View>
+  );
 };
 
 export default ImageSelector;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "flex-start",
-        gap: 20,
-        marginTop: 20,
-    },
-    image: {
-        width: 200,
-        height: 200,
-    },
-    noPhotoContainer: {
-        width: 200,
-        height: 200,
-        borderWidth: 2,
-        borderColor: colors.platinum,
-        padding: 10,
-        justifyContent: "center",
-        alignItems: "center",
-    },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+    borderRadius: 10,
+  },
+  noPhotoContainer: {
+    width: 200,
+    height: 200,
+    borderWidth: 2,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderColor: "lightgray",
+    borderRadius: 10,
+  },
+  noPhotoText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    width: 150,
+  },
+  confirmButton: {
+    backgroundColor: 'green',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });

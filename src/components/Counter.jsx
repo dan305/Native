@@ -1,94 +1,59 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import React, { useState } from "react";
-import { colors } from "../constants/colors";
-import { useDispatch, useSelector } from "react-redux";
-import { decrement, increment, incrementByAmount, reset } from "../features/Counter/counterSlice";
+import React from 'react';
+import { StyleSheet, Pressable } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { decrement, increment, reset } from '../features/counter/counterSlice';
+import StyledText from '../styledComponents/StyledText';
+import StyledView from '../styledComponents/StyledView';
 
-const Counter = () => {
-    const count = useSelector(state => state.counter.value)
-    const dispatch = useDispatch()
-    const [inputToAdd, setInputToAdd] = useState(null);
-    // let count = 0
-    
-    console.log(count);
+const Counter = ({ stock, onChangeQuantity }) => {
+  const count = useSelector((state) => state.counterReducer.value);
+  const dispatch = useDispatch();
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.buttonsContainer}>
-                <Pressable 
-                    style={styles.button}
-                    onPress={()=> dispatch(decrement())}
-                >
-                    <Text style={styles.buttonText}>-</Text>
-                </Pressable>
-                <Text style={styles.span}>{count}</Text>
-                <Pressable 
-                    style={styles.button}
-                    onPress={()=> dispatch(increment())}
-                >
-                    <Text style={styles.buttonText}>+</Text>
-                </Pressable>
-            </View>
-            <View style={styles.buttonsContainer}>
-                <TextInput
-                    placeholder="Cantidad a aumentar"
-                    style={styles.spanInput}
-                    onChangeText={setInputToAdd}
-                    value={inputToAdd}
-                />
-                <Pressable 
-                    style={styles.button}
-                    onPress={()=> dispatch(incrementByAmount(Number(inputToAdd)))}
-                >
-                    <Text style={styles.buttonText}>Add</Text>
-                </Pressable>
-            </View>
-            <Pressable style={styles.button} onPress={()=>dispatch(reset())}>
-                <Text style={styles.buttonText}>Reset</Text>
-            </Pressable>
-        </View>
-    );
+  const decrementCount = () => {
+    if (count > 1) {
+      dispatch(decrement());
+      onChangeQuantity(count - 1);
+    }
+  };
+
+  const incrementCount = () => {
+    if (count < stock) {
+      dispatch(increment());
+      onChangeQuantity(count + 1);
+    }
+  };
+
+  const resetCount = () => {
+    dispatch(reset());
+    onChangeQuantity(1); 
+  };
+
+  return (
+    <StyledView row card>
+      <Pressable onPress={decrementCount} style={styles.button}>
+        <StyledText font text>-</StyledText>
+      </Pressable>
+      <StyledText font>{count}</StyledText>
+      <Pressable onPress={incrementCount} style={styles.button}>
+        <StyledText font text>+</StyledText>
+      </Pressable>
+      <Pressable onPress={resetCount} style={styles.button}>
+        <StyledText font text >x</StyledText>
+      </Pressable>
+    </StyledView>
+  );
 };
 
 export default Counter;
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        backgroundColor: colors.teal200,
-        padding: 10,
-    },
-    buttonsContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10,
-    },
-    button: {
-        padding: 10,
-        backgroundColor: colors.platinum,
-    },
-    span: {
-        backgroundColor: colors.teal900,
-        width: "60%",
-        padding: 10,
-        textAlign: "center",
-        fontSize: 20,
-        color: colors.platinum
-    },
-    spanInput: {
-        backgroundColor: colors.teal900,
-        width: "60%",
-        padding: 10,
-        textAlign: "center",
-        fontSize: 16,
-        color: colors.platinum
-    },
-    buttonText: {
-        fontSize: 18,
-        fontFamily: "Josefin",
-    },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+    marginRight: 10,
+    width: 40,
+    alignItems:'center'
+  },
 });

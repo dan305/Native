@@ -1,178 +1,105 @@
-import { StyleSheet, Text, View } from "react-native"
-import React, { useEffect, useState } from "react"
-import * as Location from "expo-location"
-
-import AddButton from "../components/AddButton"
-/* import { usePostUserLocationMutation } from "../Services/shopServices";
+import { Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import * as Location from "expo-location";
+import MapPreview from "../components/MapPreview";
+import { googleAPI } from "../firebase/googleAPI";
 import { useDispatch, useSelector } from "react-redux";
-import { setUserLocation } from "../Features/User/userSlice"; */
-import MapPreview from "../components/MapPreview"
-import { googleMapsApiKey } from "../databases/googleMaps"
-import { colors } from "../constants/colors"
-import { useGetLocationQuery, usePostLocationMutation } from "../services/shopService"
-import { useSelector } from "react-redux"
+import { setUserLocation } from "../features/auth/authSlice";
+import { usePostUserLocationMutation } from "../services/shopService";
+import StyledText from "../styledComponents/StyledText";
 
-const LocationSelector = ({ navigation }) => {
-    const [location, setLocation] = useState({ latitude: "", longitude: "" })
-    const [address, setAddress] = useState("")
-    const [error, setError] = useState("")
-    const [triggerPostUserLocation, result] = usePostLocationMutation()
-    const {localId} = useSelector(state => state.auth.value)
+const LocationSelector = () => {
+  const [location, setLocation] = useState({ latitude: "", longitude: "" });
+  const [error, setError] = useState(null);
+  const [address, setAddress] = useState(null);
+  const { localId } = useSelector((state) => state.authReducer.value);
+  const [triggerPostAddress, result] = usePostUserLocationMutation();
 
-    /* const {localId} = useSelector(state => state.userReducer.value)
-    const [triggerPostAddress, result] = usePostUserLocationMutation();
-    const dispatch = useDispatch(); */
+  const dispatch = useDispatch();
 
-    const onConfirmAddress = () => {
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setError("Permission to access location was denied");
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync();
+      setLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
 
-        const date = new Date()
-
-        triggerPostUserLocation({
-            location: {
-                latitude: location.latitude,
-                longitude: location.longitude,
-                address: address,
-                updatedAt: `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`
-            },
-            localId: localId
-        })
-        /* const locationFormatted = {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address
+  useEffect(() => {
+    (async () => {
+      try {
+        if (location.latitude) {
+          const url_reverse_geocode = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=${googleAPI.mapStatic}`;
+          const response = await fetch(url_reverse_geocode);
+          const data = await response.json();
+          setAddress(data.results[0].formatted_address);
         }
+      } catch (err) {}
+    })();
+  }, [location]);
 
-        dispatch(setUserLocation(
-            locationFormatted
-        ))
+  const onConfirmAddress = () => {
+    const locationFormatted = {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      address: address,
+    };
+    dispatch(setUserLocation(locationFormatted));
 
-        triggerPostUserLocation({
-            location: locationFormatted,
-            localId
-        })
+    triggerPostAddress({localId, location: locationFormatted});
+  };
 
-        navigation.goBack()
-         const locationFormatted = {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address: address
-        }
-        dispatch(setUserLocation(locationFormatted))
-        
-        triggerPostAddress({location: locationFormatted, localId}) */
-    }
-
-    //Location requested on mount
-    useEffect(() => {
-        //IIFE Function
-        (async () => {
-            try {
-                let { status } = await Location.requestForegroundPermissionsAsync()
-    
-                if (status === "granted") {
-                    let location = await Location.getCurrentPositionAsync({})
-                    console.log(location)
-                    setLocation({
-                        latitude: location.coords.latitude,
-                        longitude: location.coords.longitude
-                    })
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        })()
-
-        /* (async () => {
-            try {
-                let { status } = await Location.requestForegroundPermissionsAsync();
-                if (status !== "granted") {
-                    setError("Permission to access location was denied");
-                    return;
-                }
-    
-                let location = await Location.getCurrentPositionAsync({});
-                setLocation({
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                });
-                
-            } catch (error) {
-                console.log(error.message);
-                setError(error.message)
-            }
-        })() */
-    }, [])
-
-    //Reverse geocoding
-    useEffect(() => {
-        (async () => {
-            try {
-                if (location.latitude) {
-                    const url_reverse_geocode = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=${googleMapsApiKey}`;
-                    const response = await fetch(url_reverse_geocode);
-                    const data = await response.json();
-                    console.dir(data);
-                    setAddress(data.results[0].formatted_address);
-                }
-            } catch (error) {
-                setError(error.message);
-            }
-        })();
-    }, [location])
-
-    return (
-        <View style={styles.container}>
-            <Text style={styles.text}>My Address</Text>
-            {/* Flatlist con las directions */}
-            {location ? (
-                <>
-                    <Text style={styles.text}>
-                        Lat: {location.latitude}, long: {location.longitude}.
-                    </Text>
-                    <MapPreview location={location} />
-                    <Text style={styles.address}>
-                        Formatted address: {address}
-                    </Text>
-                    <AddButton
-                        onPress={onConfirmAddress}
-                        title="Confirm address"
-                    />
-                </>
-            ) : (
-                <>
-                    <View style={styles.noLocationContainer}>
-                        <Text>{error}</Text>
-                    </View>
-                </>
-            )}
+  return (
+    <View style={styles.container}>
+      <StyledText title label>Mi Dirección</StyledText>
+      {location.latitude ? (
+        <View style={styles.noLocationContainer}>
+          <StyledText font label>
+            Lat: {location.latitude}, long: {location.longitude}
+          </StyledText>
+          <MapPreview location={location} />
+          <StyledText font label>{address}</StyledText>
+          <Pressable style={styles.button} onPress={onConfirmAddress}>
+            <StyledText text white>Confirmar Dirección</StyledText>
+          </Pressable>
         </View>
-    )
-}
+      ) : (
+        <StyledText errorColor>{error}</StyledText>
+      )}
+    </View>
+  );
+};
 
-export default LocationSelector
+export default LocationSelector;
+
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "flex-start",
-    },
-    text: {
-        paddingTop: 20,
-        fontFamily: "Josefin",
-        fontSize: 18,
-    },
-    noLocationContainer: {
-        width: 200,
-        height: 200,
-        borderWidth: 2,
-        borderColor: colors.teal400,
-        padding: 10,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    address: {
-        padding: 10,
-        fontSize: 16,
-    },
-})
+  container: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 130,
+    paddingTop: 40,
+  },
+  noLocationContainer: {
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  button: {
+    width: "80%",
+    elevation: 8,
+    backgroundColor: 'blue',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 20,
+  },
+
+});

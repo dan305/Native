@@ -1,75 +1,118 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native"
-import React from "react"
-// import CartData from "../data/cart.json"
-import CartItem from "../components/CartItem"
-import { useSelector } from "react-redux"
-import { usePostOrderMutation } from "../services/shopService"
-// import { useSelector } from "react-redux"
-// import { usePostOrderMutation } from "../services/shopService"
+import React, { useState } from 'react';
+import { StyleSheet, View, FlatList, Pressable, Alert } from 'react-native';
+import CartItem from '../components/CartItem';
+import { colors } from '../global/Colors';
+import { useSelector, useDispatch } from "react-redux";
+import { usePostOrderMutation } from '../services/shopService';
+import Toast from 'react-native-toast-message';
+import { clearCart as clearCartAction } from '../features/shop/cartSlice';
+import StyledText from '../styledComponents/StyledText';
 
 const Cart = () => {
-    // console.log(CartData);
+  const cartItems = useSelector((state) => state.cartReducer.value.items);
+  const total = useSelector((state) => state.cartReducer.value.total);
+  const userEmail = useSelector((state) => state.authReducer.value.user); 
+  const dispatch = useDispatch();
+  const [triggerPost, result] = usePostOrderMutation();
+  const [isOrdering, setIsOrdering] = useState(false);
 
-    const {items: CartData, total} = useSelector(state => state.cart.value)
-
-    const [triggerPostOrder, result] = usePostOrderMutation()
-    /* const { items: cartItems, total } = useSelector((state) => state.cart.value)
-    const [triggerPost, result] = usePostOrderMutation()
-
-    console.log(cartItems)
-    console.log(result) */
-
-    /* let total = 0
-    for (const currentItem of CartData) {
-        console.log(currentItem.id);
-        total += currentItem.price * currentItem.quantity
-    } */
-
-    /* onConfirm = () => {
-        triggerPost({
-            total,
-            items: cartItems,
-            user: "userLoggedId",
-            date: new Date().toLocaleString(),
-        })
-    } */
-
-    const onConfirmOrder = () => {
-        triggerPostOrder({items: CartData, user: 'Rafael', total})
+  const confirmCart = async () => {
+    try {
+      setIsOrdering(true);
+      const currentDate = new Date().toISOString();
+      const order = { total, cartItems, user: userEmail, createdAt: currentDate };
+      const response = await triggerPost(order);
+      setIsOrdering(false);
+      if (response && response.data) {
+        showToast('success', 'Orden enviada correctamente');
+        Alert.alert(
+          'Orden enviada',
+          '¿Desea vaciar el carrito?',
+          [
+            { text: 'Sí', onPress: clearCart },
+            { text: 'No', style: 'cancel' }
+          ]
+        );
+      } else {
+        showToast('error', 'Error al enviar la orden');
+      }
+    } catch (error) {
+      setIsOrdering(false);
+      showToast('error', 'Error al enviar la orden');
     }
+  }
 
-    console.log(result);
+  const clearCart = () => {
+    dispatch(clearCartAction());
+  }
 
-    return (
-        <View style={styles.container}>
-            <FlatList
-                data={CartData}
-                keyExtractor={(pepe) => pepe.id}
-                renderItem={({ item }) => {
-                    return <CartItem cartItem={item} />
-                }}
-            />
-            <View style={styles.totalContainer}>
-                <Pressable onPress={onConfirmOrder}>
-                    <Text>Confirm</Text>
-                </Pressable>
-                <Text>Total: ${total}</Text>
+  const showToast = (type, message) => {
+    Toast.show({
+      type: type,
+      text1: message,
+      visibilityTime: 3000,
+      autoHide: true,
+      bottomOffset: 40
+    });
+  }
+
+  return (
+    <View style={styles.container}>
+      {cartItems.length > 0 ? (
+        <>
+          <FlatList
+            data={cartItems}
+            renderItem={({ item }) => <CartItem item={item} />}
+            keyExtractor={(cartItem) => cartItem.id}
+            clearCart={clearCart}
+          />
+          <View style={styles.card}>
+            <View style={styles.textContainer}>
+              <StyledText text>Total: ${total}</StyledText>
             </View>
+            <View>
+              <Pressable onPress={confirmCart} disabled={isOrdering}>
+                <StyledText button>Enviar Orden</StyledText>
+              </Pressable>
+            </View>
+          </View>
+        </>
+      ) : (
+        <View style={styles.noProductsContainer}>
+          <StyledText text>No hay productos agregados al carrito</StyledText>
         </View>
-    )
-}
+      )}
+    </View>
+  );
+};
 
-export default Cart
+export default Cart;
+
+
 
 const styles = StyleSheet.create({
-    container: {
-        justifyContent: "space-between",
-        flex: 1,
-        marginBottom: 120,
-    },
-    totalContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-})
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: 'white'
+  },
+  card: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colors.gray,
+    borderRadius: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  textContainer: {
+    flex: 1
+  },
+  noProductsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+});
+

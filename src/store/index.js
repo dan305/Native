@@ -1,28 +1,22 @@
-import { configureStore, createReducer } from "@reduxjs/toolkit"
-import counterReducer from "../features/Counter/counterSlice"
-import cartReducer from "../features/Cart/cartSlice"
-import reductorDelShop from "../features/Shop/shopSlice"
-import authReducer from "../features/User/userSlice"
-import { shopApi } from "../services/shopService"
-import { setupListeners } from "@reduxjs/toolkit/query"
-import { authApi } from "../services/authService"
+import { configureStore } from "@reduxjs/toolkit";
+import counterReducer from "../features/counter/counterSlice";
+import shopReducer from "../features/shop/shopSlice";
+import cartReducer from "../features/shop/cartSlice";
+import authReducer from "../features/auth/authSlice";
+import { shopApi } from "../services/shopService";
+import { setupListeners } from "@reduxjs/toolkit/query";
+import { authApi } from "../services/authService";
 
+export default configureStore({
+  reducer: {
+    counterReducer,
+    shopReducer,
+    cartReducer,
+    authReducer, 
+    [shopApi.reducerPath]: shopApi.reducer,
+    [authApi.reducerPath]: authApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(shopApi.middleware).concat(authApi.middleware),
+});
 
-const store = configureStore({
-    reducer: {
-        counter: counterReducer,
-        shop: reductorDelShop,
-        cart: cartReducer,
-        auth: authReducer,
-        [shopApi.reducerPath]: shopApi.reducer,
-        [authApi.reducerPath]: authApi.reducer,
-    },
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware()
-            .concat(shopApi.middleware)
-            .concat(authApi.middleware)
-})
-
-setupListeners(store.dispatch)
-
-export default store
+setupListeners(configureStore.dispatch)

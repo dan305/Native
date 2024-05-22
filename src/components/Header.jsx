@@ -1,38 +1,63 @@
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native'
-import React from 'react'
-import { colors } from '../constants/colors'
-import { useSelector } from 'react-redux'
+import { View,  StyleSheet, Image, Pressable} from "react-native";
+import { colors } from '../global/Colors'
+import { LogoImage } from "./Logo";
+import { fonts } from '../global/fonts'
+import { useFonts } from "expo-font";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../features/auth/authSlice";
+import { deleteSession } from "../db";
+import StyledText from "../styledComponents/StyledText";
 
-const Header = ({route}) => {
+function Header({ title, isLoginPage }) {
+    const [fontsLoaded] = useFonts(fonts);
+    const { localId, user } = useSelector((state) => state.authReducer.value);
+    const dispatch = useDispatch();
 
-  const categorySelected = useSelector(state => state.shop.value.categorySelected)
+    const onLogout = async () => {
+        dispatch(logout());
+        const deletedSession = await deleteSession({ localId });
+    };
 
-  const {height, width} = useWindowDimensions()
-  return (
-    <View style = {styles.container}>
-      <Text style = {width > 360 ? styles.text: styles.textSm}>{route.name}</Text>
-    </View>
-  )
+    return (
+        <View style={styles.menu}>
+            <View>
+                <Image source={LogoImage} style={styles.logo} />
+            </View>
+            <View style={[styles.tituloconteiner, isLoginPage ? { marginLeft: 0 } : null]}>
+                <StyledText title>{title}</StyledText>
+                {user ? (
+                    <Pressable style={styles.logoutIcon} onPress={onLogout}>
+                        <MaterialIcons name="logout" size={24} color="white" />
+                    </Pressable>
+                ) : null}
+            </View>
+        </View>
+    )
 }
 
-export default Header
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: 70,
-    backgroundColor: colors.teal900,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  text: {
-    color: colors.teal200,
-    fontFamily: 'Josefin',
-    fontSize: 22
-  },
-  textSm: {
-    color: colors.teal200,
-    fontFamily: 'Josefin',
-    fontSize: 16
-  }
+export default Header;
+
+const styles =StyleSheet.create({
+    tituloconteiner: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingRight: 10,
+        marginLeft: 120,
+    },
+    
+    logoutIcon: {
+        marginLeft: 100,
+    },
+    logo: {
+        marginTop:15,
+        width:160,
+        height:50,
+    },
+    menu: {
+        alignItems:'center',
+        backgroundColor: colors.header
+    }
 })

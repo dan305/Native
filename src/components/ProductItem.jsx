@@ -1,60 +1,54 @@
-import { Image, StyleSheet, Text, Pressable } from "react-native"
-import React from "react"
-import Card from "./Card"
-import { colors } from "../constants/colors"
-import { useDispatch } from "react-redux"
-import { setIdSelected } from "../features/Shop/shopSlice"
+import { useEffect, useState } from "react";
+import { Image, Pressable, StyleSheet, useWindowDimensions } from "react-native";
+import Card from "./Card";
+import StyledText from "../styledComponents/StyledText";
+import StyledView from "../styledComponents/StyledView";
 
-const ProductItem = ({
-  product,
-  setProductSelected = () => {},
-  navigation,
-}) => {
+const ProductItem = ({ product, navigation }) => {
+  const [isPortrait, setIsPortrait] = useState(true);
+  const [isLandscape, setIsLandscape] = useState(false);
 
-  const dispatch = useDispatch()
-  const handleNavigate = () => {
-    dispatch(setIdSelected(product.title))
-    navigation.navigate('ItemDetail', {productId: product.id})
-  }
+  const { width, height } = useWindowDimensions();
+
+
+  useEffect(() => {
+    if (height > width) {
+      setIsPortrait(true);
+      setIsLandscape(false);
+    } else {
+      setIsPortrait(false);
+      setIsLandscape(true);
+    }
+  }, [width, height]);
+
   return (
-    <Card style={styles.additionalStylesCard}>
-      <Pressable
-        style={styles.pressable}
-        onPress={handleNavigate}
-      >
-        <Text style={styles.textCategory}>{product.title}</Text>
-        <Image
-          resizeMode="cover"
-          style={styles.image}
-          source={{ uri: product.images[0] }}
-        />
+    <StyledView card>
+      <Pressable onPress={() => navigation.navigate("ItemDetail", {id: product.id})}>
+        <Card style={styles.card}>
+          <StyledView>
+            <StyledText>{product.title}</StyledText>
+            <StyledText font text>${product.price}</StyledText>
+          </StyledView>
+          <Image style={styles.image} source={{ uri: product.images[0] }} />
+        </Card>
       </Pressable>
-    </Card>
-  )
-}
+    </StyledView> 
+  );
+};
 
-export default ProductItem
+export default ProductItem;
 
 const styles = StyleSheet.create({
-  image: {
-    height: 120,
-    width: "30%",
-    borderRadius: 8,
-  },
-  additionalStylesCard: {
-    height: 120,
-    width: 300,
-    margin: 10,
-  },
-  textCategory: {
-    width: "70%",
-    color: colors.teal200,
-  },
-  pressable: {
-    width: "100%",
+  card: {
+    marginVertical: 20,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingLeft: 10,
+    backgroundColor:'#93a7de',
+    width: '90%',
+    padding:10,
   },
-})
+  image: {
+    width: 70,
+    height: 70,
+  },
+}); 

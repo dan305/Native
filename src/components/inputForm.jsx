@@ -1,66 +1,47 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native'
-import React, { useState } from 'react'
-import { colors } from '../constants/colors';
+import { StyleSheet, TextInput } from "react-native";
+import React, { useState } from "react";
+import StyledText from "../styledComponents/StyledText";
+import StyledView from "../styledComponents/StyledView";
 
-const InputForm = ({
-    label, 
-    onChange, 
-    error = "",
-    isSecure = false
-}) => {
-    const [input, setInput] = useState("");
-    const onChangeText = (text) => {
-        setInput(text)
-        onChange(text)
-    }
+const InputForm = ({ label, error, onChange, isSecure }) => {
+  const [input, setInput] = useState("");
+
+  const onChangeText = (text) => {
+    setInput(text);
+    onChange(text);
+  };
+
   return (
-    <View style={styles.inputContainer}>
-      <Text style={styles.subtitle}>{label}</Text>
+    <StyledView marginBottom>
+      <StyledText label>{label}</StyledText>
       <TextInput
-        style ={styles.input}
+        style={[styles.input, error && styles.inputError]} 
         value={input}
         onChangeText={onChangeText}
         secureTextEntry={isSecure}
       />
-      {error ? 
-        <Text style = {styles.error}>
-            {error}
-        </Text>
-        :
-        null
-    }
-    </View>
-  )
-}
+      {error ? <StyledText errorColor >{error}</StyledText> : null} 
+    </StyledView>
+  );
+};
 
-export default InputForm
+export default InputForm;
+
 
 const styles = StyleSheet.create({
-    inputContainer: {
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        width: '100%'
-    },
-    subtitle: {
-        width: '90%',
-        fontSize: 16,
-        fontFamily: 'Josefin'
-    },
-    error: {
-        paddintTop: 2,
-        fontSize: 16,
-        color: 'red',
-        fontFamily: 'Josefin',
-        fontStyle: 'italic',
-    },
-    input: {
-        width: '90%',
-        borderWidth: 0,
-        borderBottomWidth: 3,
-        borderBottomColor: colors.teal400,
-        padding: 2,
-        fontFamily: 'Josefin',
-        fontSize: 14,
-    }
-})
+ 
+  input: {
+    borderWidth: 3,
+    borderColor: 'grey',
+    borderRadius: 5,
+    padding: 10,
+  },
+  inputError: {
+    borderColor: 'red', 
+  },
+  error: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
+  },
+});

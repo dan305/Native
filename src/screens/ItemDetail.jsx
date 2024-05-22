@@ -1,113 +1,127 @@
-import {
-  Button,
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions
-} from "react-native"
-import React, { useEffect, useState } from "react"
-// import allProducts from "../data/products.json"
-import { useGetProductByIdQuery } from "../services/shopService"
-import { useDispatch } from "react-redux"
-import { addCartItem } from "../features/Cart/cartSlice"
+import React, { useState , useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, Image, ActivityIndicator } from 'react-native';
+import allProducts from '../data/products.json';
+import Counter from '../components/Counter';
+import { useDispatch } from 'react-redux';
+import { addItem } from '../features/shop/cartSlice';
+import Toast from 'react-native-toast-message';
 
-const ItemDetail = ({ route, navigation }) => {
+const ItemDetail = ({ navigation, route }) => {
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
-  const dispatch = useDispatch()
-  // const [product, setProduct] = useState(null)
-  const [orientation, setOrientation] = useState("portrait")
-  const { width, height } = useWindowDimensions()
+  const { id } = route.params;
+  const dispatch = useDispatch();
 
-  const {productId: idSelected} = route.params
+  const onAddCart = () => {
+    dispatch(addItem({ ...product, quantity: selectedQuantity }));
 
-  const {data: product, error, isLoading} = useGetProductByIdQuery(idSelected)
+    Toast.show({
+      type: 'success',
+      text1: '¡Agregado al carrito!',
+      visibilityTime: 1000,
+    });
+  };
 
-  //Landscape = horizontal
-  //Portrait = vertical
+  const renderImages = () => {
+    if (product && product.images && product.images.length > 0) {
+      return product.images.map((image, index) => (
+        <Image key={index} source={{ uri: image }} style={styles.image} />
+      ));
+    }
+    return null;
+  };
 
   useEffect(() => {
-    if (width > height) setOrientation("landscape")
-    else setOrientation("portrait")
-  }, [width, height])
-
-  /* useEffect(() => {
-    //Encontrar el producto por su id
-    const productSelected = allProducts.find(
-      (product) => product.id === idSelected
-    )
-    setProduct(productSelected)
-  }, [idSelected]) */
-
-  const handleAddCart = () => {
-    dispatch(addCartItem({...product, quantity: 1}))
-  }
+    const productFound = allProducts.find((product) => product.id === id);
+    setProduct(productFound);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   return (
-    <View>
-      <Button onPress={() => navigation.goBack()} title="Go back" />
-      {product ? (
-        <View
-          style={
-            orientation === "portrait"?
-            styles.mainContainer
-            : styles.mainContainerLandscape
-          }
-        >
-          <Image
-            source={{ uri: product.images[0] }}
-            style={orientation === "portrait" ? styles.image : styles.imageLandscape}
-            resizeMode="cover"
-          />
-          <View style={orientation === "portrait" ? styles.textContainer : styles.textContainerLandscape}>
-            <Text>{product.title}</Text>
-            <Text>{product.description}</Text>
-            <Text style={styles.price}>${product.price}</Text>
-            <Button title="Add cart" onPress={handleAddCart}></Button>
-          </View>
+    <View style={styles.container}>
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={styles.loadingText}>Cargando...</Text>
         </View>
-      ) : null}
+      ) : (
+        <>
+          <Text style={styles.title}>{product.title}</Text>
+          <Text style={styles.description}>{product.description}</Text>
+          <Text style={styles.price}>Cantidad: {product.stock}</Text>
+          <Text style={styles.price}>Price: ${product.price}</Text>
+          <View style={styles.imageContainer}>
+            {renderImages()}
+          </View>
+          <Counter stock={product.stock} onChangeQuantity={setSelectedQuantity} />
+          <Pressable style={styles.buyButton} onPress={onAddCart}>
+            <Text style={styles.buyButtonText}>Agregar al carrito</Text>
+          </Pressable>
+        </>
+      )}
     </View>
-  )
-}
+  );
+};
 
-export default ItemDetail
+export default ItemDetail;
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flexDirection: "column",
+  container: {
+    flex: 1,
     justifyContent: "center",
-    alignItems: "flex-start",
-    padding: 10,
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#93a7de",
+    borderRadius: 10,
+    margin: 10,
   },
-  mainContainerLandscape: {
-    flexDirection: "row",
+  loaderContainer: {
+    flex: 1,
     justifyContent: "center",
-    alignItems: "flex-start",
-    padding: 10,
-    gap: 10,
+    alignItems: "center",
   },
-  image: {
-    width: '100%',
-    height: 250,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "black",
   },
-  imageLandscape: {
-    width: '45%',
-    height: 200
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
   },
-  textContainer: {
-    flexDirection: "column",
-  },
-
-  textContainerLandscape: {
-    width: '50%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'start',
-    gap: 10,
+  description: {
+    fontSize: 16,
+    marginBottom: 10,
   },
   price: {
-    textAlign: 'right',
-    width: '100%'
-  }
-})
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  buyButton: {
+    backgroundColor: "blue",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buyButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  imageContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  image: {
+    width: 200,
+    height: 200,
+    resizeMode: "contain",
+  },
+});

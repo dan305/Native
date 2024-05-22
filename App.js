@@ -1,42 +1,37 @@
-import {
-  Platform,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-} from "react-native"
-import { colors } from "./src/constants/colors"
-import { useFonts } from "expo-font"
-import Navigator from "./src/navigation/Navigator"
-import { Provider } from "react-redux"
-import store from "./src/store"
+import React, { forwardRef } from 'react';
+import { useFonts } from "expo-font";
+import { fonts } from "./src/global/fonts";
+import { Provider } from "react-redux";
+import store from './src/store';
+import Toast from 'react-native-toast-message';
+import MainNavigator from './src/Navigation/MainNavigator';
+import { init } from './src/db';
 
-const App = () => {
-  const [fontsLoaded, fontError] = useFonts({
-    Josefin: require("./assets/JosefinSans-Regular.ttf"),
+init()
+  .then(()=> console.log("base de datos iniciada"))
+  .catch((err) => {
+    console.log("error")
+    console.log(err);
   })
 
-  if (!fontsLoaded || fontError) {
-    return null
-  }
+const ForwardedToast = forwardRef((props, ref) => {
+  return <Toast ref={ref} {...props} />;
+});
 
-  if (fontsLoaded && !fontError) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Provider store={store}>
-          <Navigator/>
-        </Provider>
-      </SafeAreaView>
-    )
+export default function App() {
+  const [fontsLoaded] = useFonts(fonts);
+
+  if (!fontsLoaded) {
+    return null;
   }
+  return (
+      <Provider store={store}>
+        <MainNavigator/>
+        <ForwardedToast />
+      </Provider>
+  );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    flex: 1,
-    // alignItems: "center",
-    backgroundColor: colors.teal200,
-  },
-})
 
-export default App
+
+ 

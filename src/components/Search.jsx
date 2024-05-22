@@ -1,63 +1,60 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native"
-import React, { useState } from "react"
-import { FontAwesome5 } from "@expo/vector-icons"
-import { AntDesign } from "@expo/vector-icons"
-import { colors } from "../constants/colors"
-import { FontAwesome6 } from '@expo/vector-icons';
+import { useState } from "react";
+import { Pressable, TextInput,StyleSheet  } from "react-native";
+import { Entypo } from "@expo/vector-icons";
+import { Octicons } from '@expo/vector-icons';
+import StyledView from "../styledComponents/StyledView";
 
-const Search = ({ onSearch = () => {}, error = "", goBack = () => {} }) => {
-  const [keyword, setKeyword] = useState("")
-  return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search..."
-          value={keyword}
-          onChangeText={setKeyword}
-          />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+const Search = ({ onSearch, setCategorySelected }) => {
+    const [input, setInput] = useState("");
 
-      </View>
-      <Pressable onPress={() => onSearch(keyword)}>
-        <FontAwesome6 name="searchengin" size={24} color="white" />
-      </Pressable>
-      <Pressable onPress={() => setKeyword("")}>
-        <FontAwesome5 name="eraser" size={24} color="white" />
-      </Pressable>
-      <Pressable onPress={goBack}>
-        <AntDesign name="back" size={24} color="white" />
-      </Pressable>
-    </View>
-  )
+    const formatInput = (text) => {
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+
+    const search = () => {
+        if (input.trim()) {
+            onSearch(formatInput(input));
+        }
+    };
+
+    const removeInput = () => {
+        setInput("");
+        onSearch("");
+    };
+
+    return (
+        <StyledView>
+            <StyledView card row>
+                <TextInput
+                    style={styles.input}
+                    value={input}
+                    onChangeText={(text) => setInput(text)}
+                    placeholder="Busca..."
+                />
+                <Pressable onPress={search}>
+                    <Octicons name="search" size={24} color="black" />
+                </Pressable>
+                <Pressable onPress={removeInput}>
+                    <Entypo name="cross" size={25} color="black" />
+                </Pressable>
+            </StyledView>
+        </StyledView>
+    );
 }
 
-export default Search
+
+export default Search;
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 18,
-  },
   inputContainer: {
-    flexDirection: "column",
-    justifyContent: 'center',
-    alignItems: 'start',
-    gap: 4,
-    width: '70%',
+    flexDirection: "row",
+    alignItems: "center",
   },
   input: {
-    padding: 8,
-    fontSize: 18,
-    backgroundColor: colors.teal400,
-    color: colors.platinum,
-    borderRadius: 10,
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    width: "80%",
+    margin: 10
   },
-  errorText: {
-    color: 'tomato',
-    fontSize: 14,
-    fontFamily: 'Josefin'
-  }
-})
+});

@@ -1,49 +1,42 @@
-import { StyleSheet, Text, View } from "react-native";
-import React from "react";
-import { colors } from "../constants/colors";
-import { Entypo } from "@expo/vector-icons";
+import React from 'react';
+import { StyleSheet, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux'; 
+import { removeItem } from '../features/shop/cartSlice'; 
+import Toast from 'react-native-toast-message';
+import StyledText from '../styledComponents/StyledText';
+import StyledView from '../styledComponents/StyledView';
 
-const CartItem = ({ cartItem }) => {
-    return (
-        <View style={styles.card} onPress={() => {}}>
-            <View style={styles.textContainer}>
-                <Text style={styles.text}>{cartItem.title} ({cartItem.quantity})</Text>
-                <Text style={styles.text2}>{cartItem.brand}</Text>
-                <Text style={styles.text2}>${cartItem.price}</Text>
-            </View>
-            <Entypo name="trash" size={30} color="black" />
-        </View>
-    );
+const CartItem = ({ item }) => {
+  const dispatch = useDispatch(); 
+
+  const handleRemoveItem = () => { 
+    dispatch(removeItem({ productId: item.id }));
+
+    Toast.show({
+      type: 'info', 
+      text1: '¡Producto eliminado!',
+      visibilityTime: 1000,
+    });
+  };
+
+  return (
+    <StyledView itemCart>
+      <StyledView>
+        <StyledText>Nombre: {item.title}</StyledText>
+        <StyledText>Precio: ${item.price}</StyledText>
+        <StyledText>Cantidad: {item.quantity}</StyledText>
+      </StyledView>
+      <Pressable onPress={() => {
+        handleRemoveItem();
+      }}>
+        <Ionicons name="trash-bin-outline" size={24} color="black" />
+      </Pressable>
+    </StyledView>
+  );
 };
 
 export default CartItem;
 
 const styles = StyleSheet.create({
-    card: {
-        height: 100,
-        backgroundColor: colors.platinum,
-        padding: 10,
-        margin: 10,
-        borderWidth: 2,
-        borderRadius: 10,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    textContainer: {
-        width: "70%",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-    },
-    text: {
-        fontFamily: "Josefin",
-        fontSize: 19,
-        color: colors.teal400,
-    },
-    text2: {
-        fontFamily: "Josefin",
-        fontSize: 14,
-        color: colors.teal600,
-    },
-});
+})
